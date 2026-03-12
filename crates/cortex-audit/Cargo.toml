@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+readme = "../../README.md"
 description = "TIBET Cortex Audit: blackbox-met-window audit trails with tibet-vault integration"
 keywords = ["security", "audit", "compliance", "provenance", "zero-trust"]
 categories = ["cryptography", "database"]

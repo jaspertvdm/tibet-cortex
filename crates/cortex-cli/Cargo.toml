@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+readme = "../../README.md"
 description = "TIBET Cortex CLI: zero-trust AI knowledge processing from the command line"
 keywords = ["security", "zero-trust", "ai", "cli", "rag"]
 categories = ["command-line-utilities"]

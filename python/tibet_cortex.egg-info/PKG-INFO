@@ -1,0 +1,145 @@
+Metadata-Version: 2.4
+Name: tibet-cortex
+Version: 0.1.0
+Summary: TIBET Cortex — Zero-trust AI knowledge processing. JIS-gated, Airlock-protected, TIBET-audited.
+Author-email: Jasper van de Meent <jasper@humotica.nl>
+License-Expression: MIT OR Apache-2.0
+Project-URL: Homepage, https://github.com/jaspertvdm/tibet-cortex
+Project-URL: Repository, https://github.com/jaspertvdm/tibet-cortex
+Project-URL: Issues, https://github.com/jaspertvdm/tibet-cortex/issues
+Keywords: security,zero-trust,ai,rag,provenance,access-control,audit
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Rust
+Classifier: Topic :: Security
+Classifier: Topic :: Security :: Cryptography
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: cryptography>=41.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+
+# TIBET Cortex (Python)
+
+**Zero-trust AI knowledge processing. Data that protects itself.**
+
+Python client for the TIBET Cortex framework. For production use with memory-level security guarantees (mlock, zeroize), use the [Rust crates](https://crates.io/crates/cortex-core).
+
+## Install
+
+```bash
+pip install tibet-cortex
+```
+
+## Quick Start
+
+### JIS — Multi-Dimensional Access Control
+
+```python
+from cortex import JisClaim, JisPolicy, JisGate
+
+# Partner in strategy, EU, clearance 3
+claim = JisClaim(
+    actor="partner@mckinsey.com",
+    clearance=3,
+    role="partner",
+    department="strategy",
+    geo=["NL", "DE"],
+)
+
+# M&A document policy
+policy = JisPolicy(
+    min_clearance=3,
+    allowed_roles=["partner"],
+    allowed_departments=["strategy"],
+    allowed_geos=["NL", "DE", "FR"],
+)
+
+verdict = JisGate.evaluate(claim, policy)
+print(f"Access: {verdict.allowed}")  # True
+
+# Intern tries same document
+intern = JisClaim(actor="intern@mckinsey.com", clearance=1, role="intern")
+verdict = JisGate.evaluate(intern, policy)
+print(f"Access: {verdict.allowed}")  # False
+print(f"Reasons: {[d.reason.value for d in verdict.denials]}")
+# ['clearance_too_low', 'role_not_allowed', 'department_not_allowed', 'geo_restricted']
+```
+
+### Envelope — JIS-Gated Data
+
+```python
+from cortex import Envelope, EnvelopeBlock
+
+env = Envelope(id="doc_001")
+env.add_block(EnvelopeBlock.new_embedding(b"vector data"))
+env.add_block(EnvelopeBlock.new_content(b"M&A strategy for client X", jis_level=3))
+
+# Everyone can search (embedding is JIS 0)
+assert env.embedding() is not None
+
+# Only clearance 3+ can read content
+assert env.content(accessor_jis_level=1) is None
+assert env.content(accessor_jis_level=3) is not None
+```
+
+### Airlock — Controlled Processing
+
+```python
+from cortex import Airlock
+
+airlock = Airlock()
+
+result, session = airlock.process(
+    data=b"sensitive document",
+    actor="analyst@company.com",
+    jis_level=2,
+    callback=lambda plaintext: len(plaintext),
+)
+
+print(f"Result: {result}")
+print(f"Duration: {session.duration_ms:.2f}ms")
+print(f"Actor: {session.actor}")
+```
+
+### Audit — Blackbox-met-Window
+
+```python
+from cortex import AuditTrail
+
+trail = AuditTrail(".cortex/audit.json")
+trail.record_session(session, query_hash="sha256:abc", response_hash="sha256:def")
+
+stats = trail.stats()
+print(f"Queries: {stats['total_queries']}")
+print(f"Chain intact: {stats['chain_intact']}")
+```
+
+## Architecture
+
+```
+STORE     TBZ envelopes + JIS levels
+GATE      Multi-dimensional JIS claims (role × dept × time × geo)
+AIRLOCK   Zero plaintext lifetime (mlock + zeroize in Rust)
+AUDIT     Blackbox-met-window trail (WHO/WHEN, not WHAT)
+TIBET     Immutable provenance chain
+```
+
+## Links
+
+- [Rust crates (crates.io)](https://crates.io/crates/cortex-core)
+- [GitHub](https://github.com/jaspertvdm/tibet-cortex)
+- [TBZ — Authenticated compression](https://pypi.org/project/tbz/)
+
+## License
+
+MIT OR Apache-2.0

@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+readme = "../../README.md"
 description = "TIBET Cortex JIS: multi-dimensional identity claims — role, time, geo, clearance"
 keywords = ["security", "access-control", "identity", "zero-trust", "claims"]
 categories = ["authentication", "cryptography"]

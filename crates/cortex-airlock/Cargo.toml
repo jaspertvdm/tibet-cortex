@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+readme = "../../README.md"
 description = "TIBET Cortex Airlock: zero-plaintext-lifetime processing with mlock and zeroize"
 keywords = ["security", "zero-trust", "memory-safety", "zeroize", "airlock"]
 categories = ["cryptography", "memory-management"]

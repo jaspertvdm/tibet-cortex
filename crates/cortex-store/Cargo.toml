@@ -5,6 +5,7 @@ edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
+readme = "../../README.md"
 description = "TIBET Cortex Store: JIS-gated vector storage with TBZ envelopes"
 keywords = ["security", "vector-store", "zero-trust", "rag", "ai"]
 categories = ["database", "cryptography"]
