@@ -1,0 +1,24 @@
+[package]
+name = "cortex-audit"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "TIBET Cortex Audit: blackbox-met-window audit trails with tibet-vault integration"
+keywords = ["security", "audit", "compliance", "provenance", "zero-trust"]
+categories = ["cryptography", "database"]
+
+[dependencies]
+cortex-core = { path = "../cortex-core", version = "0.1.0" }
+cortex-airlock = { path = "../cortex-airlock", version = "0.1.0" }
+sled.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

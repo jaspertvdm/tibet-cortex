@@ -1,0 +1,55 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/cortex-core",
+    "crates/cortex-airlock",
+    "crates/cortex-jis",
+    "crates/cortex-store",
+    "crates/cortex-audit",
+    "crates/cortex-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Jasper van de Meent <jasper@humotica.nl>", "Root AI <root_idd@humotica.nl>"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jaspertvdm/tibet-cortex"
+
+[workspace.dependencies]
+# Crypto
+ed25519-dalek = { version = "2", features = ["rand_core"] }
+sha2 = "0.10"
+zeroize = { version = "1", features = ["derive"] }
+hex = "0.4"
+rand = "0.8"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+
+# Storage
+sled = "0.34"
+
+# Error handling
+thiserror = "2"
+anyhow = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Compression (TBZ integration)
+zstd = "0.13"
+
+# Testing
+tempfile = "3"

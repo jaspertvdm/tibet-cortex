@@ -1,0 +1,22 @@
+[package]
+name = "cortex-airlock"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "TIBET Cortex Airlock: zero-plaintext-lifetime processing with mlock and zeroize"
+keywords = ["security", "zero-trust", "memory-safety", "zeroize", "airlock"]
+categories = ["cryptography", "memory-management"]
+
+[dependencies]
+cortex-core = { path = "../cortex-core", version = "0.1.0" }
+zeroize.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"

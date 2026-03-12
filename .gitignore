@@ -1,0 +1,4 @@
+/target
+.cortex/
+*.swp
+*.swo
