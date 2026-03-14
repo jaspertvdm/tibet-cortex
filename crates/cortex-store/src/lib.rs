@@ -19,6 +19,49 @@ pub struct StoredChunk {
     pub policy: JisPolicy,
 }
 
+/// A single search hit with similarity score
+#[derive(Debug)]
+pub struct SearchHit {
+    pub id: String,
+    pub score: f32,
+    pub content: Vec<u8>,
+    pub content_hash: ContentHash,
+    pub jis_level: u8,
+}
+
+/// Search result with ranked hits and JIS filtering
+#[derive(Debug)]
+pub struct SearchResult {
+    pub hits: Vec<SearchHit>,
+    pub total_scanned: usize,
+    pub total_denied: usize,
+    pub session: AirlockSession,
+}
+
+/// Decode raw bytes (little-endian f32) into a Vec<f32>
+fn bytes_to_f32(data: &[u8]) -> Vec<f32> {
+    data.chunks_exact(4)
+        .map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]]))
+        .collect()
+}
+
+/// Cosine similarity between two f32 vectors. Returns 0.0 on zero-length.
+fn cosine_similarity(a: &[f32], b: &[f32]) -> f32 {
+    if a.len() != b.len() || a.is_empty() {
+        return 0.0;
+    }
+    let mut dot = 0.0f32;
+    let mut norm_a = 0.0f32;
+    let mut norm_b = 0.0f32;
+    for (x, y) in a.iter().zip(b.iter()) {
+        dot += x * y;
+        norm_a += x * x;
+        norm_b += y * y;
+    }
+    let denom = norm_a.sqrt() * norm_b.sqrt();
+    if denom == 0.0 { 0.0 } else { dot / denom }
+}
+
 /// The Cortex Store — sled-backed JIS-gated vector storage
 pub struct CortexStore {
     db: sled::Db,
@@ -195,6 +238,94 @@ impl CortexStore {
         })
     }
 
+    /// Semantic search: find the top-K most similar chunks by cosine similarity.
+    ///
+    /// `query_embedding` is raw f32 LE bytes (same format as stored embeddings).
+    /// Returns ranked hits filtered by JIS claim, processed through the Airlock.
+    pub fn search(
+        &self,
+        query_embedding: &[u8],
+        claim: &JisClaim,
+        top_k: usize,
+    ) -> CortexResult<SearchResult> {
+        let query_vec = bytes_to_f32(query_embedding);
+        if query_vec.is_empty() {
+            return Err(CortexError::Storage("Empty query embedding".into()));
+        }
+
+        // Scan all chunks, compute similarity on the embedding block (JIS 0)
+        let mut scored: Vec<(String, f32, StoredChunk)> = Vec::new();
+        let mut denied = 0usize;
+
+        for entry in self.db.iter() {
+            let (key, val) = entry.map_err(|e| CortexError::Storage(e.to_string()))?;
+            let id = String::from_utf8_lossy(&key).to_string();
+            let stored: StoredChunk = match serde_json::from_slice(&val) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+
+            // JIS gate check
+            let verdict = JisGate::evaluate(claim, &stored.policy);
+            if !verdict.allowed {
+                denied += 1;
+                continue;
+            }
+
+            // Compute similarity on the embedding (JIS 0 — always readable)
+            if let Some(emb_block) = stored.envelope.embedding() {
+                let emb_vec = bytes_to_f32(&emb_block.data);
+                let score = cosine_similarity(&query_vec, &emb_vec);
+                scored.push((id, score, stored));
+            }
+        }
+
+        let total_scanned = scored.len() + denied;
+
+        // Sort descending by score, take top_k
+        scored.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        scored.truncate(top_k);
+
+        // Process accessible content through the airlock
+        let airlock_input: Vec<(Vec<u8>, u8)> = scored
+            .iter()
+            .filter_map(|(_, _, stored)| {
+                stored.envelope.content(claim.clearance)
+                    .map(|block| (block.data.clone(), stored.policy.min_clearance))
+            })
+            .collect();
+
+        let (contents, session) = self.airlock.process_chunks(
+            &airlock_input,
+            &claim.actor,
+            claim.clearance,
+            |plaintext| Ok(plaintext.to_vec()),
+        )?;
+
+        let hits: Vec<SearchHit> = contents
+            .into_iter()
+            .enumerate()
+            .map(|(i, data)| {
+                let hash = ContentHash::compute(&data);
+                let (id, score, stored) = &scored[i];
+                SearchHit {
+                    id: id.clone(),
+                    score: *score,
+                    content: data,
+                    content_hash: hash,
+                    jis_level: stored.policy.min_clearance,
+                }
+            })
+            .collect();
+
+        Ok(SearchResult {
+            hits,
+            total_scanned,
+            total_denied: denied,
+            session,
+        })
+    }
+
     /// Count total stored chunks
     pub fn count(&self) -> usize {
         self.db.len()
@@ -265,6 +396,71 @@ mod tests {
 
         assert_eq!(result.chunks.len(), 3); // All accessible
         assert_eq!(result.total_denied, 0);
+    }
+
+    /// Helper: encode f32 slice to LE bytes (embedding format)
+    fn f32_to_bytes(vals: &[f32]) -> Vec<u8> {
+        vals.iter().flat_map(|f| f.to_le_bytes()).collect()
+    }
+
+    #[test]
+    fn test_search_cosine_ranking() {
+        let store = temp_store();
+
+        // Three docs with different embeddings (3-dimensional)
+        let emb_a = f32_to_bytes(&[1.0, 0.0, 0.0]); // points right
+        let emb_b = f32_to_bytes(&[0.7, 0.7, 0.0]); // 45 degrees
+        let emb_c = f32_to_bytes(&[0.0, 1.0, 0.0]); // points up
+
+        store.ingest("a", emb_a, b"Doc A".to_vec(), 0, None).unwrap();
+        store.ingest("b", emb_b, b"Doc B".to_vec(), 0, None).unwrap();
+        store.ingest("c", emb_c, b"Doc C".to_vec(), 0, None).unwrap();
+
+        // Query pointing right — should rank A > B > C
+        let query = f32_to_bytes(&[1.0, 0.0, 0.0]);
+        let claim = JisClaim::new("user", 0);
+        let result = store.search(&query, &claim, 3).unwrap();
+
+        assert_eq!(result.hits.len(), 3);
+        assert_eq!(result.hits[0].id, "a"); // most similar
+        assert_eq!(result.hits[1].id, "b"); // medium
+        assert_eq!(result.hits[2].id, "c"); // least similar
+        assert!(result.hits[0].score > result.hits[1].score);
+        assert!(result.hits[1].score > result.hits[2].score);
+    }
+
+    #[test]
+    fn test_search_jis_filtering() {
+        let store = temp_store();
+
+        let emb = f32_to_bytes(&[1.0, 0.0, 0.0]);
+        store.ingest("public", emb.clone(), b"Public doc".to_vec(), 0, None).unwrap();
+        store.ingest("secret", emb.clone(), b"Secret doc".to_vec(), 3, None).unwrap();
+
+        // Low clearance user — should only see public
+        let claim = JisClaim::new("intern", 0);
+        let result = store.search(&emb, &claim, 10).unwrap();
+
+        assert_eq!(result.hits.len(), 1);
+        assert_eq!(result.hits[0].id, "public");
+        assert_eq!(result.total_denied, 1);
+    }
+
+    #[test]
+    fn test_search_top_k_limit() {
+        let store = temp_store();
+
+        for i in 0..10 {
+            let emb = f32_to_bytes(&[1.0, i as f32 * 0.01, 0.0]);
+            store.ingest(&format!("doc_{i}"), emb, format!("Doc {i}").into_bytes(), 0, None).unwrap();
+        }
+
+        let query = f32_to_bytes(&[1.0, 0.0, 0.0]);
+        let claim = JisClaim::new("user", 0);
+        let result = store.search(&query, &claim, 3).unwrap();
+
+        assert_eq!(result.hits.len(), 3);
+        assert_eq!(result.total_scanned, 10);
     }
 
     #[test]

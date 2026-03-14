@@ -11,8 +11,8 @@ keywords = ["security", "audit", "compliance", "provenance", "zero-trust"]
 categories = ["cryptography", "database"]
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.1.0" }
-cortex-airlock = { path = "../cortex-airlock", version = "0.1.0" }
+cortex-core = { path = "../cortex-core", version = "0.2.0" }
+cortex-airlock = { path = "../cortex-airlock", version = "0.2.0" }
 sled.workspace = true
 serde.workspace = true
 serde_json.workspace = true

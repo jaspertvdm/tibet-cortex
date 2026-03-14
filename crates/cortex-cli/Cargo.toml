@@ -15,11 +15,12 @@ name = "cortex"
 path = "src/main.rs"
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.1.0" }
-cortex-airlock = { path = "../cortex-airlock", version = "0.1.0" }
-cortex-jis = { path = "../cortex-jis", version = "0.1.0" }
-cortex-store = { path = "../cortex-store", version = "0.1.0" }
-cortex-audit = { path = "../cortex-audit", version = "0.1.0" }
+cortex-core = { path = "../cortex-core", version = "0.2.0" }
+cortex-airlock = { path = "../cortex-airlock", version = "0.2.0" }
+cortex-jis = { path = "../cortex-jis", version = "0.2.0" }
+cortex-store = { path = "../cortex-store", version = "0.2.0" }
+cortex-audit = { path = "../cortex-audit", version = "0.2.0" }
+sha2.workspace = true
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true

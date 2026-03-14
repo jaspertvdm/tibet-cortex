@@ -4,6 +4,7 @@ use cortex_core::crypto::ContentHash;
 use cortex_jis::JisClaim;
 use cortex_store::CortexStore;
 use cortex_audit::AuditTrail;
+use sha2::{Sha256, Digest};
 
 #[derive(Parser)]
 #[command(
@@ -32,7 +33,7 @@ enum Commands {
         source: Option<String>,
     },
 
-    /// Query the store with JIS-gated access
+    /// Query the store with JIS-gated vector search
     #[command(alias = "q")]
     Query {
         /// Search term
@@ -46,6 +47,9 @@ enum Commands {
         /// Your department
         #[arg(short, long)]
         department: Option<String>,
+        /// Number of results to return
+        #[arg(short = 'k', long, default_value = "5")]
+        top_k: usize,
     },
 
     /// Show audit trail statistics
@@ -98,9 +102,8 @@ fn main() -> Result<()> {
             Ok(())
         }
 
-        Commands::Query { query, clearance, role, department } => {
-            println!("TIBET Cortex — JIS-gated query");
-            println!();
+        Commands::Query { query, clearance, role, department, top_k } => {
+            let store = CortexStore::open(".cortex/store")?;
 
             let mut claim = JisClaim::new("cli-user", clearance);
             if let Some(ref r) = role {
@@ -109,16 +112,64 @@ fn main() -> Result<()> {
             if let Some(ref d) = department {
                 claim = claim.with_department(d.as_str());
             }
-            let _claim = claim; // Used when vector search is implemented
 
-            println!("  Claim:     clearance={clearance}, role={}, dept={}",
+            // Derive query embedding from SHA-256 hash (deterministic, same as ingest)
+            // Real deployment would use an embedding model here
+            let mut hasher = Sha256::new();
+            hasher.update(query.as_bytes());
+            let hash_bytes = hasher.finalize();
+            let query_embedding: Vec<u8> = hash_bytes.iter()
+                .flat_map(|&b| (b as f32).to_le_bytes())
+                .collect();
+
+            let query_hash = ContentHash::compute(query.as_bytes());
+
+            println!("TIBET Cortex — JIS-gated vector search");
+            println!();
+            println!("  Claim:      clearance={clearance}, role={}, dept={}",
                 role.as_deref().unwrap_or("any"),
                 department.as_deref().unwrap_or("any"),
             );
-            println!("  Query:     {query}");
-            println!("  Query hash: {}", ContentHash::compute(query.as_bytes()));
+            println!("  Query:      {query}");
+            println!("  Query hash: {query_hash}");
+            println!("  Top-K:      {top_k}");
             println!();
-            println!("  (Vector search not yet implemented — store + JIS gate operational)");
+
+            let result = store.search(&query_embedding, &claim, top_k)?;
+
+            if result.hits.is_empty() {
+                println!("  No results found (scanned: {}, denied: {})",
+                    result.total_scanned, result.total_denied);
+            } else {
+                println!("  Results ({} hits, {} scanned, {} denied):",
+                    result.hits.len(), result.total_scanned, result.total_denied);
+                println!();
+                for (i, hit) in result.hits.iter().enumerate() {
+                    let preview = String::from_utf8_lossy(&hit.content);
+                    let preview = if preview.len() > 80 {
+                        format!("{}...", &preview[..80])
+                    } else {
+                        preview.to_string()
+                    };
+                    println!("  {}. [score={:.4}] [JIS {}] {}",
+                        i + 1, hit.score, hit.jis_level, hit.id);
+                    println!("     {preview}");
+                    println!("     hash: {}", hit.content_hash);
+                }
+            }
+
+            println!();
+            println!("  Airlock:    {} chunks processed in {:.3}ms",
+                result.session.chunks_processed, result.session.duration_ms);
+
+            // Record to audit trail
+            if let Ok(mut trail) = AuditTrail::open(".cortex/audit") {
+                let response_hash = ContentHash::compute(
+                    &serde_json::to_vec(&result.hits.iter().map(|h| h.content_hash.as_str()).collect::<Vec<_>>())
+                        .unwrap_or_default()
+                );
+                let _ = trail.record_session(&result.session, query_hash, response_hash);
+            }
 
             Ok(())
         }

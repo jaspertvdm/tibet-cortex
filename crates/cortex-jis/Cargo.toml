@@ -11,7 +11,7 @@ keywords = ["security", "access-control", "identity", "zero-trust", "claims"]
 categories = ["authentication", "cryptography"]
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.1.0" }
+cortex-core = { path = "../cortex-core", version = "0.2.0" }
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true

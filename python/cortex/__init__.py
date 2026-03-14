@@ -5,41 +5,38 @@ JIS-gated vector storage, Airlock-protected inference, TIBET-audited provenance.
 Data that protects itself.
 
 Usage:
-    from cortex import JisClaim, JisPolicy, JisGate, Envelope, AuditTrail
+    from cortex import JisClaim, JisPolicy, JisGate, CortexStore, TibetToken
 
-    # Create an identity claim
-    claim = JisClaim(
-        actor="analyst@company.com",
-        clearance=2,
-        role="analyst",
-        department="strategy",
-        geo=["NL", "DE"],
-    )
+    # Ingest with JIS gating
+    store = CortexStore()
+    store.ingest("doc_001", embedding, content, jis_level=2)
 
-    # Define a policy for sensitive data
-    policy = JisPolicy(
-        min_clearance=2,
-        allowed_roles=["analyst", "partner"],
-        allowed_departments=["strategy"],
-        allowed_geos=["NL", "DE", "FR"],
-    )
+    # Search with identity claim
+    claim = JisClaim(actor="analyst@company.com", clearance=2, role="analyst")
+    result = store.search(query_embedding, claim, top_k=5)
 
-    # Check access
-    verdict = JisGate.evaluate(claim, policy)
-    print(f"Allowed: {verdict.allowed}")
-    print(f"Denials: {verdict.denials}")
+    # Sign tokens with Ed25519
+    from cortex.token import generate_keypair
+    private_key, public_key = generate_keypair()
+    token = TibetToken.create(erin="sha256:...", erachter="query", actor="user", jis_level=2)
+    token.sign(private_key)
+    assert token.verify_signature(public_key)
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 from cortex.jis import JisClaim, JisPolicy, JisGate, JisVerdict, JisDenialReason
 from cortex.envelope import Envelope, EnvelopeBlock, BlockType
 from cortex.audit import AuditTrail, AuditEntry
 from cortex.airlock import Airlock, AirlockSession
+from cortex.token import TibetToken, Provenance, Eromheen, content_hash, generate_keypair
+from cortex.store import CortexStore, SearchResult, SearchHit
 
 __all__ = [
     "JisClaim", "JisPolicy", "JisGate", "JisVerdict", "JisDenialReason",
     "Envelope", "EnvelopeBlock", "BlockType",
     "AuditTrail", "AuditEntry",
     "Airlock", "AirlockSession",
+    "TibetToken", "Provenance", "Eromheen", "content_hash", "generate_keypair",
+    "CortexStore", "SearchResult", "SearchHit",
 ]

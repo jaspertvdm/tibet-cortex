@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Serialize, Deserialize};
 
-use crate::crypto::ContentHash;
+use crate::crypto::{ContentHash, KeyPair};
+use crate::error::{CortexError, CortexResult};
 
 /// TIBET provenance token — who did what, when, why
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -90,6 +91,28 @@ impl TibetToken {
         token.signature = None;
         serde_json::to_vec(&token).unwrap_or_default()
     }
+
+    /// Sign this token with an Ed25519 keypair.
+    /// Sets the signature field in-place and returns a reference to self.
+    pub fn sign(mut self, keypair: &KeyPair) -> Self {
+        let bytes = self.signable_bytes();
+        self.signature = Some(keypair.sign(&bytes));
+        self
+    }
+
+    /// Verify this token's Ed25519 signature against a public key.
+    /// Returns Ok(()) if valid, Err if missing or invalid.
+    pub fn verify_signature(&self, keypair: &KeyPair) -> CortexResult<()> {
+        match &self.signature {
+            Some(sig) => keypair.verify(&self.signable_bytes(), sig),
+            None => Err(CortexError::SignatureInvalid),
+        }
+    }
+
+    /// Check if this token is signed
+    pub fn is_signed(&self) -> bool {
+        self.signature.is_some()
+    }
 }
 
 impl Provenance {
@@ -124,6 +147,15 @@ impl Provenance {
             }
         }
         true
+    }
+
+    /// Verify both chain integrity AND all token signatures.
+    /// Every token in the chain must be signed and valid.
+    pub fn verify_signatures(&self, keypair: &KeyPair) -> bool {
+        if !self.verify_chain() {
+            return false;
+        }
+        self.chain.iter().all(|t| t.verify_signature(keypair).is_ok())
     }
 }
 
@@ -176,5 +208,80 @@ mod tests {
         prov.append(t2);
 
         assert!(!prov.verify_chain());
+    }
+
+    #[test]
+    fn test_token_sign_verify() {
+        let kp = KeyPair::generate();
+        let hash = ContentHash::compute(b"test data");
+        let token = TibetToken::new(hash, "signed action", "actor@test", 2).sign(&kp);
+
+        assert!(token.is_signed());
+        assert!(token.verify_signature(&kp).is_ok());
+    }
+
+    #[test]
+    fn test_unsigned_token_fails_verify() {
+        let kp = KeyPair::generate();
+        let hash = ContentHash::compute(b"test");
+        let token = TibetToken::new(hash, "unsigned", "actor", 0);
+
+        assert!(!token.is_signed());
+        assert!(token.verify_signature(&kp).is_err());
+    }
+
+    #[test]
+    fn test_wrong_key_fails_verify() {
+        let kp1 = KeyPair::generate();
+        let kp2 = KeyPair::generate();
+        let hash = ContentHash::compute(b"data");
+        let token = TibetToken::new(hash, "action", "actor", 0).sign(&kp1);
+
+        assert!(token.verify_signature(&kp2).is_err());
+    }
+
+    #[test]
+    fn test_signed_chain_verify() {
+        let kp = KeyPair::generate();
+        let h1 = ContentHash::compute(b"first");
+        let h2 = ContentHash::compute(b"second");
+        let h3 = ContentHash::compute(b"third");
+
+        let t1 = TibetToken::new(h1, "first", "actor", 0).sign(&kp);
+        let t1_id = t1.token_id.clone();
+        let t2 = TibetToken::new(h2, "second", "actor", 0)
+            .with_parent(&t1_id)
+            .sign(&kp);
+        let t2_id = t2.token_id.clone();
+        let t3 = TibetToken::new(h3, "third", "actor", 0)
+            .with_parent(&t2_id)
+            .sign(&kp);
+
+        let mut prov = Provenance::new();
+        prov.append(t1);
+        prov.append(t2);
+        prov.append(t3);
+
+        assert!(prov.verify_chain());
+        assert!(prov.verify_signatures(&kp));
+    }
+
+    #[test]
+    fn test_mixed_signed_unsigned_chain_fails() {
+        let kp = KeyPair::generate();
+        let h1 = ContentHash::compute(b"first");
+        let h2 = ContentHash::compute(b"second");
+
+        let t1 = TibetToken::new(h1, "first", "actor", 0).sign(&kp);
+        let t1_id = t1.token_id.clone();
+        // t2 unsigned — should fail verify_signatures
+        let t2 = TibetToken::new(h2, "second", "actor", 0).with_parent(&t1_id);
+
+        let mut prov = Provenance::new();
+        prov.append(t1);
+        prov.append(t2);
+
+        assert!(prov.verify_chain()); // chain structure OK
+        assert!(!prov.verify_signatures(&kp)); // but signatures fail
     }
 }

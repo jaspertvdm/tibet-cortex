@@ -208,7 +208,7 @@ checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
 name = "cortex-airlock"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "cortex-core",
@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "cortex-audit"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "cortex-airlock",
@@ -238,7 +238,7 @@ dependencies = [
 
 [[package]]
 name = "cortex-cli"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -249,6 +249,7 @@ dependencies = [
  "cortex-store",
  "serde",
  "serde_json",
+ "sha2",
  "tokio",
  "tracing",
  "tracing-subscriber",
@@ -256,7 +257,7 @@ dependencies = [
 
 [[package]]
 name = "cortex-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "ed25519-dalek",
@@ -271,7 +272,7 @@ dependencies = [
 
 [[package]]
 name = "cortex-jis"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "cortex-core",
@@ -283,7 +284,7 @@ dependencies = [
 
 [[package]]
 name = "cortex-store"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "chrono",
  "cortex-airlock",
@@ -296,6 +297,19 @@ dependencies = [
  "tempfile",
  "thiserror",
  "tracing",
+]
+
+[[package]]
+name = "cortex-tests"
+version = "0.2.0"
+dependencies = [
+ "cortex-airlock",
+ "cortex-audit",
+ "cortex-core",
+ "cortex-jis",
+ "cortex-store",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

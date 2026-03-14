@@ -11,7 +11,7 @@ keywords = ["security", "zero-trust", "memory-safety", "zeroize", "airlock"]
 categories = ["cryptography", "memory-management"]
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.1.0" }
+cortex-core = { path = "../cortex-core", version = "0.2.0" }
 zeroize.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
