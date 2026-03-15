@@ -155,6 +155,40 @@ The auditor does **NOT** see:
 
 Unless they have matching JIS credentials to resolve the hashes.
 
+## Benchmarks
+
+**Run it yourself:**
+
+```bash
+git clone https://github.com/jaspertvdm/tibet-cortex.git
+cd tibet-cortex
+cargo test --release --test bench_airlock -- --nocapture
+```
+
+### What's measured
+
+| Test | What it measures | Iterations |
+|------|-----------------|------------|
+| `bench_airlock_single_chunk` | Airlock overhead for one 4KB chunk: `mlock` → `memcpy` → closure (SHA-256 hash) → `zeroize` → `munlock` | 1,000 |
+| `bench_airlock_batch_chunks` | Same pipeline for 10 chunks (typical RAG response), processed sequentially in one Airlock session | 100 |
+| `bench_full_search_pipeline` | End-to-end: scan 100 embeddings + JIS gate evaluation + cosine similarity ranking + Airlock processing of top-5 results | 100 |
+
+Timing uses `std::time::Instant` (monotonic clock). No warmup runs — first iteration included. Assertions are relaxed for debug mode; the numbers below are release mode.
+
+### Reference numbers
+
+| Metric | Latency | Throughput |
+|--------|---------|------------|
+| Airlock single chunk (4KB) | 134µs | 7,436 ops/sec |
+| Airlock batch (10 × 4KB) | 611µs (61µs/chunk) | 16,374 chunks/sec |
+| Full search (100 docs, top-5) | 1.5ms | 665 searches/sec |
+
+*Measured on: Xeon E5-2650 v3 @ 2.30GHz, 64GB DDR4, Linux 6.12. Your numbers will vary — mlock latency depends on kernel config, available RAM, and RLIMIT_MEMLOCK.*
+
+### Context
+
+A typical LLM response takes 500ms–2s. The entire zero-trust pipeline (envelope unpacking, JIS gate, cosine search, Airlock) adds ~1.5ms — less than 0.3% overhead.
+
 ## Part of the TIBET Ecosystem
 
 - [TBZ](https://github.com/jaspertvdm/tbz) — Block-level authenticated compression
