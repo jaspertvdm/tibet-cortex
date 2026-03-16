@@ -1,17 +1,17 @@
 [package]
-name = "cortex-airlock"
+name = "tibet-cortex-airlock"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "../../README.md"
-description = "TIBET Cortex Airlock: zero-plaintext-lifetime processing with mlock and zeroize"
+description = "tibet-cortex-airlock: zero-plaintext-lifetime processing with mlock and zeroize"
 keywords = ["security", "zero-trust", "memory-safety", "zeroize", "airlock"]
 categories = ["cryptography", "memory-management"]
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.2.0" }
+cortex-core = { package = "tibet-cortex-core", path = "../cortex-core", version = "0.3.0" }
 zeroize.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

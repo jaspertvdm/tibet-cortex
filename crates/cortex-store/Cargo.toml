@@ -1,19 +1,19 @@
 [package]
-name = "cortex-store"
+name = "tibet-cortex-store"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "../../README.md"
-description = "TIBET Cortex Store: JIS-gated vector storage with TBZ envelopes"
+description = "tibet-cortex-store: JIS-gated vector storage with TBZ envelopes"
 keywords = ["security", "vector-store", "zero-trust", "rag", "ai"]
 categories = ["database", "cryptography"]
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.2.0" }
-cortex-jis = { path = "../cortex-jis", version = "0.2.0" }
-cortex-airlock = { path = "../cortex-airlock", version = "0.2.0" }
+cortex-core = { package = "tibet-cortex-core", path = "../cortex-core", version = "0.3.0" }
+cortex-jis = { package = "tibet-cortex-jis", path = "../cortex-jis", version = "0.3.0" }
+cortex-airlock = { package = "tibet-cortex-airlock", path = "../cortex-airlock", version = "0.3.0" }
 sled.workspace = true
 serde.workspace = true
 serde_json.workspace = true

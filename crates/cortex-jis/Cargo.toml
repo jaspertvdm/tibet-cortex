@@ -1,17 +1,17 @@
 [package]
-name = "cortex-jis"
+name = "tibet-cortex-jis"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "../../README.md"
-description = "TIBET Cortex JIS: multi-dimensional identity claims — role, time, geo, clearance"
+description = "tibet-cortex-jis: multi-dimensional identity claims — role, time, geo, clearance"
 keywords = ["security", "access-control", "identity", "zero-trust", "claims"]
 categories = ["authentication", "cryptography"]
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.2.0" }
+cortex-core = { package = "tibet-cortex-core", path = "../cortex-core", version = "0.3.0" }
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true

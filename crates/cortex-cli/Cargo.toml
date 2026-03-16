@@ -1,12 +1,12 @@
 [package]
-name = "cortex-cli"
+name = "tibet-cortex-cli"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "../../README.md"
-description = "TIBET Cortex CLI: zero-trust AI knowledge processing from the command line"
+description = "tibet-cortex-cli: zero-trust AI knowledge processing from the command line"
 keywords = ["security", "zero-trust", "ai", "cli", "rag"]
 categories = ["command-line-utilities"]
 
@@ -15,11 +15,11 @@ name = "cortex"
 path = "src/main.rs"
 
 [dependencies]
-cortex-core = { path = "../cortex-core", version = "0.2.0" }
-cortex-airlock = { path = "../cortex-airlock", version = "0.2.0" }
-cortex-jis = { path = "../cortex-jis", version = "0.2.0" }
-cortex-store = { path = "../cortex-store", version = "0.2.0" }
-cortex-audit = { path = "../cortex-audit", version = "0.2.0" }
+cortex-core = { package = "tibet-cortex-core", path = "../cortex-core", version = "0.3.0" }
+cortex-airlock = { package = "tibet-cortex-airlock", path = "../cortex-airlock", version = "0.3.0" }
+cortex-jis = { package = "tibet-cortex-jis", path = "../cortex-jis", version = "0.3.0" }
+cortex-store = { package = "tibet-cortex-store", path = "../cortex-store", version = "0.3.0" }
+cortex-audit = { package = "tibet-cortex-audit", path = "../cortex-audit", version = "0.3.0" }
 sha2.workspace = true
 clap.workspace = true
 serde.workspace = true

@@ -207,112 +207,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
 
 [[package]]
-name = "cortex-airlock"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "cortex-core",
- "libc",
- "serde",
- "serde_json",
- "thiserror",
- "tracing",
- "zeroize",
-]
-
-[[package]]
-name = "cortex-audit"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "cortex-airlock",
- "cortex-core",
- "serde",
- "serde_json",
- "sha2",
- "sled",
- "tempfile",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "cortex-cli"
-version = "0.2.0"
-dependencies = [
- "anyhow",
- "clap",
- "cortex-airlock",
- "cortex-audit",
- "cortex-core",
- "cortex-jis",
- "cortex-store",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "cortex-core"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "ed25519-dalek",
- "hex",
- "rand",
- "serde",
- "serde_json",
- "sha2",
- "thiserror",
- "zeroize",
-]
-
-[[package]]
-name = "cortex-jis"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "cortex-core",
- "serde",
- "serde_json",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "cortex-store"
-version = "0.2.0"
-dependencies = [
- "chrono",
- "cortex-airlock",
- "cortex-core",
- "cortex-jis",
- "serde",
- "serde_json",
- "sha2",
- "sled",
- "tempfile",
- "thiserror",
- "tracing",
-]
-
-[[package]]
-name = "cortex-tests"
-version = "0.2.0"
-dependencies = [
- "cortex-airlock",
- "cortex-audit",
- "cortex-core",
- "cortex-jis",
- "cortex-store",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
 name = "cpufeatures"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1094,6 +988,112 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "tibet-cortex-airlock"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "libc",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tibet-cortex-core",
+ "tracing",
+ "zeroize",
+]
+
+[[package]]
+name = "tibet-cortex-audit"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sled",
+ "tempfile",
+ "thiserror",
+ "tibet-cortex-airlock",
+ "tibet-cortex-core",
+ "tracing",
+]
+
+[[package]]
+name = "tibet-cortex-cli"
+version = "0.3.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tibet-cortex-airlock",
+ "tibet-cortex-audit",
+ "tibet-cortex-core",
+ "tibet-cortex-jis",
+ "tibet-cortex-store",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
+name = "tibet-cortex-core"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "ed25519-dalek",
+ "hex",
+ "rand",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "tibet-cortex-jis"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tibet-cortex-core",
+ "tracing",
+]
+
+[[package]]
+name = "tibet-cortex-store"
+version = "0.3.0"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_json",
+ "sha2",
+ "sled",
+ "tempfile",
+ "thiserror",
+ "tibet-cortex-airlock",
+ "tibet-cortex-core",
+ "tibet-cortex-jis",
+ "tracing",
+]
+
+[[package]]
+name = "tibet-cortex-tests"
+version = "0.3.0"
+dependencies = [
+ "serde_json",
+ "tempfile",
+ "tibet-cortex-airlock",
+ "tibet-cortex-audit",
+ "tibet-cortex-core",
+ "tibet-cortex-jis",
+ "tibet-cortex-store",
 ]
 
 [[package]]

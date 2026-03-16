@@ -1,14 +1,14 @@
 [package]
-name = "cortex-tests"
+name = "tibet-cortex-tests"
 version.workspace = true
 edition.workspace = true
 publish = false
 
 [dev-dependencies]
-cortex-core = { path = "../cortex-core" }
-cortex-airlock = { path = "../cortex-airlock" }
-cortex-jis = { path = "../cortex-jis" }
-cortex-store = { path = "../cortex-store" }
-cortex-audit = { path = "../cortex-audit" }
+cortex-core = { package = "tibet-cortex-core", path = "../cortex-core" }
+cortex-airlock = { package = "tibet-cortex-airlock", path = "../cortex-airlock" }
+cortex-jis = { package = "tibet-cortex-jis", path = "../cortex-jis" }
+cortex-store = { package = "tibet-cortex-store", path = "../cortex-store" }
+cortex-audit = { package = "tibet-cortex-audit", path = "../cortex-audit" }
 serde_json.workspace = true
 tempfile.workspace = true

@@ -1,12 +1,12 @@
 [package]
-name = "cortex-core"
+name = "tibet-cortex-core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 readme = "../../README.md"
-description = "TIBET Cortex core types: TBZ envelopes, TIBET tokens, and crypto primitives"
+description = "tibet-cortex-core: TBZ envelopes, TIBET tokens, and crypto primitives"
 keywords = ["security", "zero-trust", "ai", "provenance", "cryptography"]
 categories = ["cryptography", "data-structures"]
 

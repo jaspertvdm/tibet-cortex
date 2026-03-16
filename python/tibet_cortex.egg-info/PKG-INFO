@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: tibet-cortex
-Version: 0.1.0
+Version: 0.2.0
 Summary: TIBET Cortex — Zero-trust AI knowledge processing. JIS-gated, Airlock-protected, TIBET-audited.
 Author-email: Jasper van de Meent <jasper@humotica.nl>
 License-Expression: MIT OR Apache-2.0
